@@ -51,6 +51,14 @@ CameraPreview.show = function(onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "showCamera", []);
 };
 
+CameraPreview.recordVideo = function(onSuccess, onError) {
+    exec(onSuccess, onError, PLUGIN_NAME, "recordVideo", []);
+};
+
+CameraPreview.stopVideo = function(onSuccess, onError) {
+    exec(onSuccess, onError, PLUGIN_NAME, "stopVideo", []);
+};
+
 CameraPreview.takePicture = function(opts, onSuccess, onError) {
     if (!opts) {
         opts = {};

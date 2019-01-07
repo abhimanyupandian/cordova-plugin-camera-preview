@@ -45,6 +45,8 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   private static final String STOP_CAMERA_ACTION = "stopCamera";
   private static final String PREVIEW_SIZE_ACTION = "setPreviewSize";
   private static final String SWITCH_CAMERA_ACTION = "switchCamera";
+  private static final String RECORD_VIDEO_ACTION = "recordVideo";
+  private static final String STOP_VIDEO_ACTION = "stopVideo";
   private static final String TAKE_PICTURE_ACTION = "takePicture";
   private static final String SHOW_CAMERA_ACTION = "showCamera";
   private static final String HIDE_CAMERA_ACTION = "hideCamera";
@@ -100,6 +102,10 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
         cordova.requestPermissions(this, CAM_REQ_CODE, permissions);
         return true;
       }
+    } else if (RECORD_VIDEO_ACTION.equals(action)) {
+      return recordVideo(callbackContext);
+    } else if (STOP_VIDEO_ACTION.equals(action)) {
+      return stopVideo(callbackContext);
     } else if (TAKE_PICTURE_ACTION.equals(action)) {
       return takePicture(args.getInt(0), args.getInt(1), args.getInt(2), callbackContext);
     } else if (COLOR_EFFECT_ACTION.equals(action)) {
@@ -310,6 +316,30 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Camera started");
     pluginResult.setKeepCallback(true);
     startCameraCallbackContext.sendPluginResult(pluginResult);
+  }
+
+  private boolean recordVideo(CallbackContext callbackContext) {
+    if(this.hasView(callbackContext) == false){
+      return true;
+    }
+
+    recordVideoCallbackContext = callbackContext;
+
+    fragment.recordVideo();
+
+    return true;
+  }
+
+  private boolean stopVideo(CallbackContext callbackContext) {
+    if(this.hasView(callbackContext) == false){
+      return true;
+    }
+
+    stopVideoCallbackContext = callbackContext;
+
+    fragment.stopVideo();
+
+    return true;
   }
 
   private boolean takePicture(int width, int height, int quality, CallbackContext callbackContext) {

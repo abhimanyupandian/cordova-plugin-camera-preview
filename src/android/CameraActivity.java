@@ -15,6 +15,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.hardware.MediaRecorder;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 import android.os.Bundle;
@@ -71,6 +72,7 @@ public class CameraActivity extends Fragment {
   private View view;
   private Camera.Parameters cameraParameters;
   private Camera mCamera;
+  private MediaRecorder mMediaRecorder;
   private int numberOfCameras;
   private int cameraCurrentlyLocked;
   private int currentQuality;
@@ -317,7 +319,8 @@ public class CameraActivity extends Fragment {
       setDefaultCameraId();
       mPreview.setCamera(null, -1);
       mCamera.setPreviewCallback(null);
-      mCamera.release();
+      releaseMediaRecorder();       // if you are using MediaRecorder, release it first
+      mCamera.release()
       mCamera = null;
     }
   }
@@ -545,6 +548,66 @@ public class CameraActivity extends Fragment {
     Log.d(TAG, "CameraPreview optimalPictureSize " + size.width + 'x' + size.height);
     return size;
   }
+
+  public void recordVideo() {
+    mMediaRecorder = new MediaRecorder();
+
+    // Step 1: Unlock and set camera to MediaRecorder
+    mCamera.unlock();
+    mMediaRecorder.setCamera(mCamera);
+
+    // Step 2: Set sources
+    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+    // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
+    mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+    mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+    mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+
+    // Step 4: Set output file
+    mMediaRecorder.setOutputFile("OUTPUT");
+
+    // Step 5: Set the preview output
+    mMediaRecorder.setPreviewDisplay(mPreview.getHolder().getSurface());
+
+    // Step 6: Prepare configured MediaRecorder
+    try {
+        mMediaRecorder.prepare();
+        mMediaRecorder.start();
+    } catch (IllegalStateException e) {
+        Log.d(TAG, "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+        releaseMediaRecorder();
+        return false;
+    } catch (IOException e) {
+        Log.d(TAG, "IOException preparing MediaRecorder: " + e.getMessage());
+        releaseMediaRecorder();
+        return false;
+    }
+    return true;
+  }
+
+  public stopVideo() {
+      mMediaRecorder.stop();  // stop the recording
+      releaseMediaRecorder(); // release the MediaRecorder object
+      mCamera.lock();         // take camera access back from MediaRecorder
+  }
+
+  private void releaseMediaRecorder(){
+        if (mMediaRecorder != null) {
+            mMediaRecorder.reset();   // clear recorder configuration
+            mMediaRecorder.release(); // release the recorder object
+            mMediaRecorder = null;
+            mCamera.lock();           // lock camera for later use
+        }
+    }
+
+    private void releaseCamera(){
+        if (mCamera != null){
+            mCamera.release();        // release the camera for other applications
+            mCamera = null;
+        }
+    }
 
   public void takePicture(final int width, final int height, final int quality){
     Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
